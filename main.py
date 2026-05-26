@@ -257,7 +257,7 @@ def rfc3(ciudad: str):
 
     resultado = list(
 
-        db.hotel.aggregate([
+        db.Hotel.aggregate([
 
             {
                 "$match": {
@@ -428,3 +428,52 @@ def rfc3(ciudad: str):
     )
 
     return resultado
+
+# =====================================================
+# 4. EDITAR RESEÑA (cambiar puntaje y comentario) RF2
+# Recibe el id de la reseña y los nuevos datos
+# =====================================================
+@app.put('/resenas/{id_resena}')
+def update_resena(id_resena: int, datos: dict):
+    # Buscar la reseña original
+    resena_original = db.resenas.find_one({"id": id_resena})
+    if not resena_original:
+        return {"error": "Reseña no encontrada"}, 404
+
+    # Nuevos valores (si no vienen, se mantienen los originales)
+    nuevo_puntaje = datos.get("puntaje", resena_original["puntaje"])
+    nuevo_comentario = datos.get("comentario", resena_original["comentario"])
+
+    # Actualizar la reseña
+    db.resenas.update_one(
+        {"id": id_resena},
+        {"$set": {
+            "puntaje": nuevo_puntaje,
+            "comentario": nuevo_comentario,
+            "fecha_publicacion": datetime.now()  # Opcional: actualizar fecha de modificación
+        }}
+    )
+
+    # =====================================
+    # Recalcular promedio del hotel afectado
+    # =====================================
+    id_hotel = resena_original["id_hotel"]
+    resenas_hotel = list(db.resenas.find({"id_hotel": id_hotel, "estado": True}))
+    cantidad = len(resenas_hotel)
+    suma = sum(r["puntaje"] for r in resenas_hotel)
+    promedio = round(suma / cantidad) if cantidad > 0 else 0
+
+    db.hotel.update_one(
+        {"id": id_hotel},
+        {"$set": {
+            "cantidad_resenas": cantidad,
+            "promedio_puntaje": promedio
+        }}
+    )
+
+    return {
+        "mensaje": "Reseña actualizada correctamente",
+        "id_resena": id_resena,
+        "nuevo_puntaje": nuevo_puntaje,
+        "nuevo_comentario": nuevo_comentario
+    }
