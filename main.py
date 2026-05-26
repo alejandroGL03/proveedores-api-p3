@@ -257,7 +257,7 @@ def rfc3(ciudad: str):
 
     resultado = list(
 
-        db.Hotel.aggregate([
+        db.hotel.aggregate([
 
             {
                 "$match": {
@@ -267,7 +267,7 @@ def rfc3(ciudad: str):
 
             {
                 "$lookup": {
-                    "from": "Resenas",
+                    "from": "resenas",
                     "localField": "id",
                     "foreignField": "id_hotel",
                     "as": "resenas"
