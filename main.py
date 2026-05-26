@@ -477,3 +477,77 @@ def update_resena(id_resena: int, datos: dict):
         "nuevo_puntaje": nuevo_puntaje,
         "nuevo_comentario": nuevo_comentario
     }
+
+# =====================================================
+# RF4 Consulta Resenas
+# ===================================================== 
+@app.get('/rf4')
+def rf4(
+    id_hotel: int,
+    pagina: int = 1,
+    orden: str = "fecha"
+):
+
+    limite = 5
+    skip = (pagina - 1) * limite
+
+    # Ordenar por fecha
+    if orden == "fecha":
+
+        sort_criteria = {
+            "fecha_publicacion": -1
+        }
+
+    # Ordenar por utilidad
+    else:
+
+        sort_criteria = {
+            "cantidad_votos": -1
+        }
+
+    resultado = list(
+
+        db.resenas.aggregate([
+
+            {
+                "$match": {
+                    "id_hotel": id_hotel,
+                    "estado": True
+                }
+            },
+
+            {
+                "$project": {
+
+                    "_id": 0,
+
+                    "fecha_publicacion": 1,
+
+                    "puntaje": 1,
+
+                    "comentario": 1,
+
+                    "cantidad_votos": {
+                        "$size": "$votos"
+                    }
+
+                }
+            },
+
+            {
+                "$sort": sort_criteria
+            },
+
+            {
+                "$skip": skip
+            },
+
+            {
+                "$limit": limite
+            }
+
+        ])
+
+    )
+
+    return resultado
