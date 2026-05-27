@@ -551,3 +551,95 @@ def rf4(
     )
 
     return resultado
+
+
+
+# RF5 - MARCAR RESEÑA COMO ÚTIL
+
+@app.post('/rf5')
+def rf5(datos: dict):
+
+    id_resena = datos["id_resena"]
+
+    db.resenas.update_one(
+        {"id": id_resena},
+        {
+            "$push": {
+                "votos": "usuario"
+            }
+        }
+    )
+
+    return {
+        "mensaje": "Voto agregado correctamente"
+    }
+
+
+# RF7 - RESPONDER RESEÑA
+
+@app.post('/rf7')
+def rf7(datos: dict):
+
+    id_resena = datos["id_resena"]
+
+    respuesta = datos["respuesta"]
+
+    db.resenas.update_one(
+        {"id": id_resena},
+        {
+            "$set": {
+                "respuesta": {
+                    "descripcion": respuesta,
+                    "destacada": False
+                }
+            }
+        }
+    )
+
+    return {
+        "mensaje": "Respuesta agregada correctamente"
+    }
+
+
+
+# RF8 - ELIMINAR RESEÑA
+
+@app.post('/rf8')
+def rf8(datos: dict):
+
+    id_resena = datos["id_resena"]
+
+    db.resenas.update_one(
+        {"id": id_resena},
+        {
+            "$set": {
+                "estado": False
+            }
+        }
+    )
+
+    return {
+        "mensaje": "Reseña eliminada correctamente"
+    }
+
+
+
+# RF9 - DESTACAR RESPUESTA
+
+@app.post('/rf9')
+def rf9(datos: dict):
+
+    id_resena = datos["id_resena"]
+
+    db.resenas.update_one(
+        {"id": id_resena},
+        {
+            "$set": {
+                "respuesta.destacada": True
+            }
+        }
+    )
+
+    return {
+        "mensaje": "Respuesta destacada correctamente"
+    }
