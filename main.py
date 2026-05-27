@@ -674,3 +674,316 @@ def rf9(datos: dict):
     return {
         "mensaje": "Respuesta destacada correctamente"
     }
+
+# =====================================================
+# RFC1 - TOP HOTELES POR CALIFICACION
+# =====================================================
+@app.get('/rfc1')
+def rfc1(fecha_inicio: str, fecha_fin: str):
+
+    inicio = datetime.strptime(
+        fecha_inicio,
+        "%Y-%m-%d"
+    )
+
+    fin = datetime.strptime(
+        fecha_fin,
+        "%Y-%m-%d"
+    )
+
+    resultado = list(
+
+        db.resenas.aggregate([
+
+            {
+                "$match": {
+                    "fecha_publicacion": {
+                        "$gte": inicio,
+                        "$lte": fin
+                    },
+                    "estado": True
+                }
+            },
+
+            {
+                "$group": {
+
+                    "_id": "$id_hotel",
+
+                    "promedio_calificacion": {
+                        "$avg": "$puntaje"
+                    },
+
+                    "total_resenas": {
+                        "$sum": 1
+                    }
+
+                }
+            },
+
+            {
+                "$sort": {
+                    "promedio_calificacion": -1
+                }
+            },
+
+            {
+                "$limit": 10
+            }
+
+        ])
+
+    )
+
+    return resultado
+    # =====================================================
+# RFC2 - EVOLUCION REPUTACION HOTEL
+# =====================================================
+@app.get('/rfc2')
+def rfc2(id_hotel: int):
+
+    resultado = list(
+
+        db.resenas.aggregate([
+
+            {
+                "$match": {
+                    "id_hotel": id_hotel,
+                    "estado": True
+                }
+            },
+
+            {
+                "$group": {
+
+                    "_id": {
+                        "mes": {
+                            "$month":
+                                "$fecha_publicacion"
+                        }
+                    },
+
+                    "promedio_mensual": {
+                        "$avg": "$puntaje"
+                    },
+
+                    "total_resenas": {
+                        "$sum": 1
+                    }
+
+                }
+            },
+
+            {
+                "$sort": {
+                    "_id.mes": 1
+                }
+            }
+
+        ])
+
+    )
+
+    return resultado
+
+# =====================================================
+# RFC3 - PERFIL COMPARATIVO HOTELES
+# =====================================================
+@app.get('/rfc3')
+def rfc3(ciudad: str):
+
+    resultado = list(
+
+        db.hotel.aggregate([
+
+            {
+                "$match": {
+                    "ciudad.nombre": ciudad
+                }
+            },
+
+            {
+                "$lookup": {
+
+                    "from": "resenas",
+
+                    "localField": "id",
+
+                    "foreignField": "id_hotel",
+
+                    "as": "resenas"
+
+                }
+            },
+
+            {
+                "$project": {
+
+                    "nombre": 1,
+
+                    "total_resenas": {
+                        "$size": "$resenas"
+                    },
+
+                    "promedio_hotel": {
+                        "$avg":
+                            "$resenas.puntaje"
+                    },
+
+                    "resenas_con_respuesta": {
+
+                        "$size": {
+
+                            "$filter": {
+
+                                "input":
+                                    "$resenas",
+
+                                "as":
+                                    "r",
+
+                                "cond": {
+                                    "$ne":
+                                        ["$$r.respuesta", None]
+                                }
+
+                            }
+
+                        }
+
+                    },
+
+                    "resenas_destacadas": {
+
+                        "$size": {
+
+                            "$filter": {
+
+                                "input":
+                                    "$resenas",
+
+                                "as":
+                                    "r",
+
+                                "cond": {
+                                    "$eq": [
+                                        "$$r.respuesta.destacada",
+                                        True
+                                    ]
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+            {
+                "$project": {
+
+                    "nombre": 1,
+
+                    "total_resenas": 1,
+
+                    "promedio_hotel": {
+                        "$round": [
+                            "$promedio_hotel",
+                            2
+                        ]
+                    },
+
+                    "porcentaje_respuesta": {
+
+                        "$cond": [
+
+                            {
+                                "$eq":
+                                    ["$total_resenas", 0]
+                            },
+
+                            0,
+
+                            {
+                                "$round": [
+
+                                    {
+                                        "$multiply": [
+
+                                            {
+                                                "$divide": [
+
+                                                    "$resenas_con_respuesta",
+
+                                                    "$total_resenas"
+
+                                                ]
+                                            },
+
+                                            100
+
+                                        ]
+                                    },
+
+                                    2
+
+                                ]
+                            }
+
+                        ]
+
+                    },
+
+                    "porcentaje_destacadas": {
+
+                        "$cond": [
+
+                            {
+                                "$eq":
+                                    ["$total_resenas", 0]
+                            },
+
+                            0,
+
+                            {
+                                "$round": [
+
+                                    {
+                                        "$multiply": [
+
+                                            {
+                                                "$divide": [
+
+                                                    "$resenas_destacadas",
+
+                                                    "$total_resenas"
+
+                                                ]
+                                            },
+
+                                            100
+
+                                        ]
+                                    },
+
+                                    2
+
+                                ]
+                            }
+
+                        ]
+
+                    }
+
+                }
+
+            }
+
+        ])
+
+    )
+
+    return resultado
