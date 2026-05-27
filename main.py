@@ -477,7 +477,29 @@ def update_resena(id_resena: int, datos: dict):
         "nuevo_puntaje": nuevo_puntaje,
         "nuevo_comentario": nuevo_comentario
     }
+# =====================================================
+# RF3 Eliminar Resenas
+# =====================================================
+@app.delete('/rf3/{id_resena}')
+def eliminar_resena(id_resena: int):
 
+    resultado = db.resenas.delete_one(
+        {
+            "id": id_resena
+        }
+    )
+
+    if resultado.deleted_count == 1:
+
+        return {
+            "mensaje":
+                "Reseña eliminada"
+        }
+
+    return {
+        "mensaje":
+            "No se encontró la reseña"
+    }
 # =====================================================
 # RF4 Consulta Resenas
 # ===================================================== 
