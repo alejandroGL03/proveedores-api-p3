@@ -577,27 +577,60 @@ def rf4(
 
 
 # RF5 - MARCAR RESEÑA COMO ÚTIL
+# =====================================================
+# RF5 - MARCAR RESEÑA COMO UTIL
+# =====================================================
 @app.post('/rf5')
 def rf5(datos: dict):
 
-    print(datos)
-
     id_resena = int(datos["id_resena"])
 
+    # buscar reseña
+    resena = db.resenas.find_one(
+        {"id": id_resena}
+    )
+
+    # si no existe
+    if not resena:
+
+        return {
+            "mensaje": "Reseña no encontrada"
+        }
+
+    # si no tiene votos
+    if "votos" not in resena:
+
+        db.resenas.update_one(
+            {"id": id_resena},
+            {
+                "$set": {
+                    "votos": []
+                }
+            }
+        )
+
+    # agregar voto
     resultado = db.resenas.update_one(
+
         {"id": id_resena},
+
         {
             "$push": {
                 "votos": "usuario"
             }
         }
+
     )
 
     return {
-        "mensaje": "Voto agregado correctamente",
-        "modificados": resultado.modified_count
-    }
 
+        "mensaje":
+            "Voto agregado correctamente",
+
+        "modificados":
+            resultado.modified_count
+
+    }
 
 # RF7 - RESPONDER RESEÑA
 
