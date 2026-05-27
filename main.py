@@ -577,60 +577,77 @@ def rf4(
 
 
 # RF5 - MARCAR RESEÑA COMO ÚTIL
-# =====================================================
-# RF5 - MARCAR RESEÑA COMO UTIL
-# =====================================================
 @app.post('/rf5')
 def rf5(datos: dict):
 
-    id_resena = int(datos["id_resena"])
+    try:
 
-    # buscar reseña
-    resena = db.resenas.find_one(
-        {"id": id_resena}
-    )
+        print("DATOS RECIBIDOS:")
+        print(datos)
 
-    # si no existe
-    if not resena:
+        id_resena = int(datos["id_resena"])
 
-        return {
-            "mensaje": "Reseña no encontrada"
-        }
+        print("ID:")
+        print(id_resena)
 
-    # si no tiene votos
-    if "votos" not in resena:
-
-        db.resenas.update_one(
-            {"id": id_resena},
-            {
-                "$set": {
-                    "votos": []
-                }
-            }
+        resena = db.resenas.find_one(
+            {"id": id_resena}
         )
 
-    # agregar voto
-    resultado = db.resenas.update_one(
+        print("RESENA:")
+        print(resena)
 
-        {"id": id_resena},
+        if not resena:
 
-        {
-            "$push": {
-                "votos": "usuario"
+            return {
+                "mensaje": "Reseña no encontrada"
             }
+
+        # crear votos si no existe
+        if "votos" not in resena:
+
+            db.resenas.update_one(
+                {"id": id_resena},
+                {
+                    "$set": {
+                        "votos": []
+                    }
+                }
+            )
+
+        resultado = db.resenas.update_one(
+
+            {"id": id_resena},
+
+            {
+                "$push": {
+                    "votos": "usuario"
+                }
+            }
+
+        )
+
+        print("MODIFICADOS:")
+        print(resultado.modified_count)
+
+        return {
+
+            "mensaje":
+                "Voto agregado correctamente",
+
+            "modificados":
+                resultado.modified_count
+
         }
 
-    )
+    except Exception as e:
 
-    return {
+        print("ERROR:")
+        print(str(e))
 
-        "mensaje":
-            "Voto agregado correctamente",
-
-        "modificados":
-            resultado.modified_count
-
-    }
+        return {
+            "error": str(e)
+        }
 
 # RF7 - RESPONDER RESEÑA
 
