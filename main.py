@@ -576,78 +576,35 @@ def rf4(
 
 
 
-# RF5 - MARCAR RESEÑA COMO ÚTIL
+
+# RF5 - MARCAR RESEÑA COMO UTIL
+
 @app.post('/rf5')
 def rf5(datos: dict):
 
-    try:
+    id_resena = int(datos["id_resena"])
 
-        print("DATOS RECIBIDOS:")
-        print(datos)
+    resultado = db.resenas.update_one(
 
-        id_resena = int(datos["id_resena"])
+        {"id": id_resena},
 
-        print("ID:")
-        print(id_resena)
-
-        resena = db.resenas.find_one(
-            {"id": id_resena}
-        )
-
-        print("RESENA:")
-        print(resena)
-
-        if not resena:
-
-            return {
-                "mensaje": "Reseña no encontrada"
+        {
+            "$push": {
+                "votos": "usuario"
             }
-
-        # crear votos si no existe
-        if "votos" not in resena:
-
-            db.resenas.update_one(
-                {"id": id_resena},
-                {
-                    "$set": {
-                        "votos": []
-                    }
-                }
-            )
-
-        resultado = db.resenas.update_one(
-
-            {"id": id_resena},
-
-            {
-                "$push": {
-                    "votos": "usuario"
-                }
-            }
-
-        )
-
-        print("MODIFICADOS:")
-        print(resultado.modified_count)
-
-        return {
-
-            "mensaje":
-                "Voto agregado correctamente",
-
-            "modificados":
-                resultado.modified_count
-
         }
 
-    except Exception as e:
+    )
 
-        print("ERROR:")
-        print(str(e))
+    return {
 
-        return {
-            "error": str(e)
-        }
+        "mensaje":
+            "Voto agregado correctamente",
+
+        "modificados":
+            resultado.modified_count
+
+    }
 
 # RF7 - RESPONDER RESEÑA
 
