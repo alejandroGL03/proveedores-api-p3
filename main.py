@@ -577,13 +577,14 @@ def rf4(
 
 
 # RF5 - MARCAR RESEÑA COMO ÚTIL
-
 @app.post('/rf5')
 def rf5(datos: dict):
 
-    id_resena = datos["id_resena"]
+    print(datos)
 
-    db.resenas.update_one(
+    id_resena = int(datos["id_resena"])
+
+    resultado = db.resenas.update_one(
         {"id": id_resena},
         {
             "$push": {
@@ -593,7 +594,8 @@ def rf5(datos: dict):
     )
 
     return {
-        "mensaje": "Voto agregado correctamente"
+        "mensaje": "Voto agregado correctamente",
+        "modificados": resultado.modified_count
     }
 
 
